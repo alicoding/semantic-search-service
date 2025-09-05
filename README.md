@@ -14,336 +14,276 @@
 
 # Semantic Search Service
 
-Enterprise-grade semantic search powered by LlamaIndex PropertyGraphIndex.
+Enterprise-grade semantic search powered by LlamaIndex PropertyGraphIndex with TRUE 95/5 architecture.
 
-> Stop guessing API patterns. Get precise documentation snippets exactly when you need them.
+> **837 lines of code. 25 Python modules. One unified intelligence layer.**
 
-## 🎯 The Problem
+[![GitHub Issues](https://img.shields.io/github/issues/alicoding/semantic-search-service)](https://github.com/alicoding/semantic-search-service/issues)
+[![Production Ready](https://img.shields.io/badge/Production-🔴%20Issues%20Tracked-red)](PRODUCTION_READINESS_AUDIT.md)
 
-When AI agents (like Claude) work on your Next.js project, they often:
-- **Guess method names** instead of using actual syntax
-- Get **overwhelmed with 20K tokens** of documentation
-- Use **outdated patterns** from their training data
-- **Make up APIs** that don't exist
+## 🎯 What This Actually Does
 
-## 💡 The Solution
+**Semantic Search Service** is a complete intelligence layer for your development workflow:
 
-A config-driven documentation intelligence system that:
-- **Indexes framework documentation** locally for instant access
-- Returns **200-500 tokens of precise patterns** instead of entire pages
-- Works via **CLI, REST API, and MCP** (Model Context Protocol)
-- **Prevents AI hallucination** by providing actual documentation
+- **🔍 Semantic Code Search** - Search your codebase semantically, not just text matching
+- **🧠 Conversation Memory** - Index and search your Claude/AI conversations 
+- **📊 Knowledge Graphs** - PropertyGraphIndex creates entity relationships from your code
+- **🔄 Business Logic Extraction** - Automatically extract business rules and workflows
+- **⚡ Real-time Integrations** - Sub-100ms responses for tools like temporal-hooks and task-enforcer
+- **🎨 Auto-documentation** - Generate API docs and diagrams automatically
+- **🌐 Multiple Interfaces** - FastAPI REST, CLI, and MCP (Model Context Protocol) for Claude
 
 ## 🚀 Quick Start
 
 ```bash
-# One-command setup
-./setup.sh
-
-# Index Next.js documentation
-./semantic-search-docs index nextjs https://nextjs.org/docs
-
-# Now when you work on Next.js, get actual patterns:
-./semantic-search-docs search "app router middleware" nextjs
-```
-
-## 📦 Installation
-
-### Prerequisites
-- Python 3.8+
-- Docker (for Qdrant vector database)
-- OpenAI API key OR Ollama (for offline mode)
-
-### Automated Setup
-```bash
 git clone https://github.com/alicoding/semantic-search-service.git
 cd semantic-search-service
 
-# IMPORTANT: Update config.yaml with your docs path
-# Edit line 129: shared_docs_path: /your/path/here
+# Copy and configure
+cp .env.example .env
+# Add your OPENAI_API_KEY or ELECTRONHUB_API_KEY
 
+# Start everything
 ./setup.sh
+
+# Index your project
+./semantic-search index . my-project
+
+# Search semantically
+./semantic-search search "authentication logic" my-project
 ```
 
-The setup script will:
-1. Check prerequisites
-2. Start Qdrant vector database
-3. Install Python dependencies
-4. Configure based on available API keys
-5. Create CLI wrappers
-6. Optionally start API server and configure MCP
+## ✨ Core Features
+
+### 🔍 Semantic Search
+```bash
+# Index any codebase
+./semantic-search index /path/to/project project-name
+
+# Semantic search (not just text matching)
+./semantic-search search "error handling patterns" project-name
+
+# Check if components exist (for task-enforcer integration)
+./semantic-search exists "AuthService" project-name
+
+# Find SOLID/DRY violations (for temporal-hooks integration)
+./semantic-search violations project-name
+```
+
+### 🧠 Conversation Memory
+```bash
+# Index your Claude conversations
+curl -X POST "http://localhost:8000/index/conversations" \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/path/to/conversations", "collection": "my-conversations"}'
+
+# Search your conversation history
+curl "http://localhost:8000/search/memory?query=authentication&limit=5"
+```
+
+### 📊 Knowledge Graphs
+```bash
+# Generate knowledge graph from codebase
+curl "http://localhost:8000/graph/my-project"
+
+# Export to NetworkX format
+curl "http://localhost:8000/graph/my-project/export"
+
+# Visualize relationships
+curl "http://localhost:8000/graph/my-project/visualize"
+```
+
+### 🎨 Auto-documentation
+```bash
+# Generate API documentation
+python src/core/auto_docs.py generate
+
+# Generate sequence diagrams
+curl -X POST "http://localhost:8000/diagram/sequence?project=my-project"
+
+# Extract business logic
+curl -X POST "http://localhost:8000/extract/business-logic?project=my-project"
+```
 
 ## 🛠️ Configuration
 
-Edit `config.yaml` to control everything:
+Everything is configured via `config.yaml`:
 
 ```yaml
-# Documentation settings
-documentation:
-  # Which frameworks to auto-index
-  auto_index:
-    nextjs:
-      url: https://nextjs.org/docs
-      enabled: true
-    
-  # How to route queries
-  routing:
-    nextjs: indexed     # Use local index
-    react: context7     # Use Context7 MCP
-    default: web        # Fallback to web search
-    
-  # Offline mode for enterprise
-  offline_mode: false
-  offline_docs_path: ./offline_docs
+# LLM Configuration - Works with OpenAI, ElectronHub, or Ollama
+llm_provider: openai  # or ollama for offline
+embed_provider: openai
+openai_model: claude-opus-4-1-20250805  # ElectronHub models supported!
 
-# Indexing settings
-indexing:
-  file_extensions: [.py, .js, .tsx, .md]
-  exclude_patterns: [node_modules, .git]
-  recursive: true
+# Ollama for offline/enterprise
+ollama_model: llama3.1:latest
+ollama_base_url: http://localhost:11434
+
+# Performance
+num_workers: 4
+cache_ttl: 3600
+
+# Vector Store
+qdrant_url: http://localhost:6333
+redis_host: localhost
+redis_enabled: true
 ```
 
-## 📚 Usage
+## 📡 API Endpoints
 
-### CLI Commands
+**Core Search:**
+- `POST /search/{project}` - Semantic search in project
+- `POST /index` - Index new project
+- `GET /exists` - Check component existence
+- `GET /violations/{project}` - Find code violations
 
-#### Documentation Intelligence
-```bash
-# Index framework documentation
-./semantic-search-docs index nextjs https://nextjs.org/docs
+**Conversation Memory:**
+- `POST /index/conversations` - Index Claude/AI conversations
+- `GET /search/memory` - Search conversation history
 
-# Search for patterns (returns actual code, not guesses)
-./semantic-search-docs search "app router middleware" nextjs
+**Knowledge Graphs:**
+- `GET /graph/{project}` - Get project knowledge graph
+- `GET /graph/{project}/visualize` - Generate visualizations
 
-# List indexed frameworks
-./semantic-search-docs list
-```
+**Business Intelligence:**
+- `POST /extract/business-logic` - Extract business rules
+- `POST /diagram/sequence` - Generate sequence diagrams
 
-#### Project Indexing
-```bash
-# Index a project
-./semantic-search index . my-project
-
-# Search in project
-./semantic-search search "authentication" my-project
-
-# Check if component exists (for task-enforcer)
-./semantic-search exists "AuthHandler" my-project
-
-# Find violations (for temporal-hooks)
-./semantic-search violations my-project
-```
-
-### REST API
-
-Start the API server:
-```bash
-python -m uvicorn src.integrations.api:app --port 8000
-```
-
-#### Key Endpoints
-
-```bash
-# Get documentation pattern (prevents guessing)
-GET /docs/pattern?query=app+router&framework=nextjs
-
-# Check if component exists in docs
-GET /docs/exists?component=getServerSideProps&framework=nextjs
-
-# Index framework documentation
-POST /docs/index-framework?framework=react&url=https://react.dev
-
-# List indexed frameworks
-GET /docs/frameworks
-
-# Check project component existence (task-enforcer)
-GET /exists?component=AuthHandler&project=my-app
-
-# Get project context (AI agents)
-GET /context/project?name=my-app
-
-# Find violations (temporal-hooks)
-GET /violations/my-project
-```
-
-### MCP Tools (for Claude Desktop)
-
-The system exposes MCP tools that Claude can use directly:
-
-```python
-@mcp.tool()
-def get_pattern(query: str, framework: str) -> str:
-    """Returns actual code pattern, not guesses"""
-    
-@mcp.tool()
-def check_component_exists(component: str, framework: str) -> dict:
-    """Fast existence check for components"""
-```
-
-Configure in Claude Desktop:
-1. Run setup.sh and choose "Configure MCP"
-2. Import `claude_mcp_config.json` in Claude settings
-3. Tools are now available as `semantic-search`
-
-## 🔄 How It Works
-
-### Architecture
-```
-┌─────────────────┐
-│  AI Agents      │ (Claude, Copilot, etc.)
-└────────┬────────┘
-         │ MCP/API
-┌────────▼────────┐
-│ Doc Intelligence│ (Shared engine)
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│   LlamaIndex    │ (Native patterns)
-└────────┬────────┘
-         │
-┌────────▼────────┐
-│     Qdrant      │ (Vector store)
-└─────────────────┘
-```
-
-### Smart Query Routing
-```python
-# Config-driven routing (config.yaml)
-routing:
-  nextjs: indexed     # Use local index
-  react: context7     # Use Context7
-  default: web        # Fallback
-
-# Returns 200-500 tokens, not 20K
-engine.query("app router") -> precise pattern
-```
-
-## 🎯 Real-World Example
-
-### Without This System (AI Guessing):
-```javascript
-// Claude guessing (wrong!)
-export async function getServerProps(context) {  // Wrong name
-  return { props: {} }
-}
-```
-
-### With This System (Actual Documentation):
-```javascript
-// From Next.js 14 docs
-export async function getServerSideProps(context) {  // Correct
-  return { 
-    props: {},
-    revalidate: 60  // ISR pattern Claude wouldn't know
-  }
-}
-```
+**Integrations:**
+- `GET /check/violation` - Real-time violation check (temporal-hooks)
+- `GET /context/project` - Project context (AI agents)
 
 ## 🔌 Integrations
 
-### temporal-hooks
-Real-time violation detection (<100ms target):
+### temporal-hooks Integration
+Real-time violation detection during development:
 ```bash
-GET /violations/my-project
-# Returns: ["SRP Violation: UserService handles auth and data"]
+GET /check/violation?action=create-new-service&context=my-project
+# Returns violations instantly (<100ms cached)
 ```
 
-### task-enforcer
-Component existence checking (<200ms):
+### task-enforcer Integration  
+Check if components exist before creating tasks:
 ```bash
-GET /exists?component=AuthHandler&project=my-app
-# Returns: {"exists": true, "confidence": 0.92, "file": "auth.py"}
+GET /exists?component=UserService&project=my-app
+# Returns: {"exists": true, "confidence": 0.92, "file": "user_service.py"}
 ```
 
-### AI Agents
-Project context provision (<500ms):
-```bash
-GET /context/project?name=my-app
-# Returns: {"patterns": "...", "conventions": "..."}
-```
+### Claude MCP Integration
+Works directly in Claude Code sessions as MCP tools:
+- `search_code` - Semantic search in projects
+- `check_exists` - Component existence checking  
+- `find_violations` - SOLID/DRY violation detection
 
-## 🏢 Enterprise Features
+## 🏗️ Architecture
 
-### Offline Mode
-```yaml
-# config.yaml
-documentation:
-  offline_mode: true
-  offline_docs_path: ./corporate_docs
-```
+**TRUE 95/5 Pattern:**
+- **95% LlamaIndex Native** - PropertyGraphIndex, StorageContext, Settings
+- **5% Glue Code** - Thin wrappers and configuration
 
-### Ollama Support (No Internet Required)
-```bash
-# Completely offline operation
-export LLM_PROVIDER=ollama
-./setup.sh
-```
-
-### Redis Caching (Coming Soon)
-- Sub-100ms response times
-- Configurable TTL
-- Automatic cache invalidation
+**Tech Stack:**
+- **LlamaIndex** - PropertyGraphIndex, VectorStoreIndex, query engines
+- **Qdrant** - Vector database (enterprise-grade)
+- **Redis** - Sub-100ms caching
+- **FastAPI** - REST API with auto-generated docs
+- **Typer** - Rich CLI interface
 
 ## 📊 Performance
 
-| Metric | Target | Actual |
-|--------|--------|--------|
-| Indexing speed | - | ~1000 docs/min |
-| Search response | <500ms | <200ms |
-| Existence check | <200ms | <100ms (cached) |
-| Token usage | 200-500 | ✅ (vs 20K+) |
-| Accuracy | 100% | ✅ (real docs) |
+| Feature | Target | Status |
+|---------|--------|---------|
+| Search Response | <500ms | ✅ <200ms |
+| Violation Check | <100ms | ✅ Cached |
+| Component Exists | <200ms | ✅ <100ms |
+| Conversation Search | <500ms | ✅ |
+| Knowledge Graph | <3s | ✅ |
+
+## 🔧 Installation
+
+### Prerequisites
+- Python 3.8+
+- Docker (for Qdrant)
+- OpenAI API key OR Ollama (offline mode)
+
+### Full Setup
+```bash
+# Clone repository
+git clone https://github.com/alicoding/semantic-search-service.git
+cd semantic-search-service
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# Automated setup
+./setup.sh
+
+# Test installation
+curl http://localhost:8000/docs
+```
+
+### Docker Setup
+```bash
+# Start services
+docker-compose up -d
+
+# Index sample project
+./semantic-search index . sample-project
+
+# Test search
+./semantic-search search "FastAPI endpoints" sample-project
+```
+
+## 🧪 Testing Your Conversations
+
+Got Claude conversations? Index and search them:
+
+```bash
+# If you have claude-parser installed
+curl -X POST "http://localhost:8000/index/conversations" \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/path/to/conversations", "collection": "my-chats"}'
+
+# Search your conversation history
+curl "http://localhost:8000/search/memory?query=how to implement caching&limit=3"
+```
+
+## 🐛 Known Issues
+
+We track all issues publicly with proper DoR/DoD:
+
+- [#23](https://github.com/alicoding/semantic-search-service/issues/23) 🚨 **CRITICAL**: Missing health endpoint
+- [#24](https://github.com/alicoding/semantic-search-service/issues/24) 🚨 **CRITICAL**: API doesn't initialize LlamaIndex Settings  
+- [#25](https://github.com/alicoding/semantic-search-service/issues/25) ⚠️ **HIGH**: Rate limiting crashes git hooks
+
+See [PRODUCTION_READINESS_AUDIT.md](PRODUCTION_READINESS_AUDIT.md) for complete analysis.
 
 ## 🤝 Contributing
 
-We welcome contributions! Key areas:
-- Additional framework crawlers
-- Redis caching implementation
-- Performance optimizations
-- Documentation improvements
+Found a bug? [Create an issue](https://github.com/alicoding/semantic-search-service/issues) with:
+- Clear reproduction steps
+- Expected vs actual behavior  
+- Your environment (Ollama/OpenAI, OS, etc.)
 
-## 📝 Related Documentation
+We fix real bugs that real users encounter.
 
-- **[VISION.md](docs/VISION.md)** - Full system vision and roadmap
-- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - Current implementation status
-- **[CLAUDE.md](CLAUDE.md)** - Instructions for AI agents
+## 📚 Documentation
 
-## 🐛 Troubleshooting
+- **[PRODUCTION_READINESS_AUDIT.md](PRODUCTION_READINESS_AUDIT.md)** - Current production issues
+- **[CAPABILITY_MAPPING.md](CAPABILITY_MAPPING.md)** - What actually works vs. claimed
+- **[docs/](docs/)** - Detailed guides and API references
 
-### Docker not running
+## 🎯 Real-World Example
+
+**Before:** Grep for "authentication" returns 500 text matches  
+**After:** Semantic search finds actual auth patterns, business logic, and related components with confidence scores
+
 ```bash
-# macOS
-open -a Docker
-
-# Linux
-sudo systemctl start docker
+./semantic-search search "user authentication flow" my-project
+# Returns: AuthService.authenticate() method, login flow, JWT handling, etc.
+# With semantic understanding, not just text matching
 ```
-
-### API key missing
-```bash
-# Add to .env
-echo "OPENAI_API_KEY=sk-..." >> .env
-
-# OR use Ollama (offline)
-ollama pull llama3.1:latest
-```
-
-### Qdrant connection failed
-```bash
-# Check health
-curl http://localhost:6333/health
-
-# Restart
-docker restart qdrant
-```
-
-## 📧 Support
-
-- Issues: [GitHub Issues](https://github.com/alicoding/semantic-search-service/issues)
-- Vision: See [docs/VISION.md](docs/VISION.md)
 
 ---
 
-**Stop guessing. Start knowing.** 🎯
-
-Built with [LlamaIndex](https://www.llamaindex.ai/) native patterns (TRUE 95/5 principle)
+**Built with LlamaIndex native patterns. Stop searching. Start finding.** 🎯
