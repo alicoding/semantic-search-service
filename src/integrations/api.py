@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Context7 FastAPI - Thin wrapper only
+Semantic Search Service API - Full-featured documentation intelligence service
+37 endpoints providing indexing, querying, analysis, and visualization capabilities
 """
 
 from fastapi import FastAPI, HTTPException
@@ -32,27 +33,33 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Health check endpoint with system status"""
-    try:
-        # Check Qdrant connection
-        from src.core.config import get_qdrant_client
-        client = get_qdrant_client()
-        collections = client.get_collections()
-        qdrant_status = "connected"
-        collection_count = len(collections.collections)
-    except Exception as e:
-        qdrant_status = f"error: {str(e)}"
-        collection_count = 0
+    """Health check endpoint - Native LlamaIndex validation patterns"""
+    from datetime import datetime
+    from src.core.config import get_qdrant_client
+    from llama_index.core import Settings
     
-    return {
-        "status": "healthy",
-        "service": "semantic-search-service",
-        "timestamp": "2025-01-09T00:00:00Z",
-        "components": {
-            "qdrant": qdrant_status,
-            "collections": collection_count
-        }
-    }
+    components = {}
+    
+    # Native Qdrant test - one-liner
+    try:
+        components["qdrant"] = {"status": "ok", "collections": len(get_qdrant_client().get_collections().collections)}
+    except Exception as e:
+        components["qdrant"] = {"status": "error", "message": str(e)}
+    
+    # Native LlamaIndex Settings validation - secure debugging info only
+    try:
+        embedding_test = len(Settings.embed_model.get_text_embedding("test")) > 0
+        components["embeddings"] = {"status": "ok", "model": getattr(Settings.embed_model, 'model_name', 'unknown'), "test": embedding_test}
+    except Exception as e:
+        components["embeddings"] = {"status": "error", "message": str(e)}
+    
+    try:
+        llm_test = len(str(Settings.llm.complete("test"))) > 0
+        components["llm"] = {"status": "ok", "model": getattr(Settings.llm, 'model', 'unknown'), "test": llm_test}
+    except Exception as e:
+        components["llm"] = {"status": "error", "message": str(e)}
+    
+    return {"status": "healthy", "service": "semantic-search-service", "timestamp": datetime.utcnow().isoformat() + "Z", "components": components}
 
 # Import functions directly - TRUE 95/5 pattern
 from src.core import semantic_search, doc_search
@@ -99,11 +106,15 @@ class AnalyzeOverviewRequest(BaseModel):
 # === TEMPORAL-HOOKS INTEGRATION ===
 @app.get("/check/violation")
 async def check_violation(action: str, context: str):
-    """Real-time violation check for temporal-hooks - <100ms cached"""
+    """Real-time violation check for temporal-hooks - fast cached, ~5s uncached"""
+    import time
+    start_time = time.time()
+    
     cache_key = f"violation:{action}:{context}"
     cached = query_cache.get(cache_key, "violations")
     if cached:
-        return {"violation": cached, "cached": True, "response_time_ms": 1}
+        response_time_ms = round((time.time() - start_time) * 1000, 2)
+        return {"violation": cached, "cached": True, "response_time_ms": response_time_ms}
     
     # Check if the specific action would violate principles in the project
     from src.core.index_helper import get_index, index_exists
@@ -130,7 +141,8 @@ async def check_violation(action: str, context: str):
     
     # Cache for fast response
     query_cache.set(cache_key, "violations", violation or "none")
-    return {"violation": violation, "cached": False, "action": action, "context": context}
+    response_time_ms = round((time.time() - start_time) * 1000, 2)
+    return {"violation": violation, "cached": False, "response_time_ms": response_time_ms, "action": action, "context": context}
 
 # === INTELLIGENT ROUTING ===
 @app.get("/smart/query")
@@ -476,3 +488,98 @@ def analyze_overview(req: AnalyzeOverviewRequest) -> Dict[str, Any]:
         
     except Exception as e:
         raise HTTPException(500, f"Overview generation failed: {str(e)}")
+
+# === NATIVE LLAMAINDEX DOCUMENTATION ENDPOINTS ===
+
+class IndexUrlRequest(BaseModel):
+    url: str
+    collection_name: str
+
+class IndexGitHubRequest(BaseModel):
+    repo: str
+    collection_name: str
+
+@app.post("/docs/index-url")
+def index_docs_url_endpoint(req: IndexUrlRequest) -> Dict[str, Any]:
+    """📖 INDEX DOCUMENTATION FROM URL - Native LlamaIndex SimpleWebPageReader"""
+    try:
+        from llama_index.readers.web import SimpleWebPageReader
+        from llama_index.core import VectorStoreIndex, StorageContext
+        from llama_index.vector_stores.qdrant import QdrantVectorStore
+        from src.core.config import get_qdrant_client
+        
+        # Native web reading
+        reader = SimpleWebPageReader(html_to_text=True)
+        documents = reader.load_data([req.url])
+        
+        if not documents:
+            raise HTTPException(400, "No documents loaded from URL")
+        
+        # Native indexing
+        client = get_qdrant_client()
+        vector_store = QdrantVectorStore(client=client, collection_name=f"docs_{req.collection_name}")
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+        
+        index = VectorStoreIndex.from_documents(
+            documents=documents,
+            storage_context=storage_context,
+            show_progress=True
+        )
+        
+        return {
+            "success": True,
+            "indexed": True,
+            "docs_count": len(documents),
+            "collection": f"docs_{req.collection_name}",
+            "url": req.url
+        }
+        
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+@app.post("/docs/index-github")
+def index_github_docs_endpoint(req: IndexGitHubRequest) -> Dict[str, Any]:
+    """🐙 INDEX GITHUB REPOSITORY DOCS - Native GitHubRepositoryReader"""
+    try:
+        from llama_index.readers.github import GitHubRepositoryReader
+        from llama_index.core import VectorStoreIndex, StorageContext
+        from llama_index.vector_stores.qdrant import QdrantVectorStore
+        from src.core.config import get_qdrant_client
+        
+        # Native GitHub reading
+        owner, repo_name = req.repo.split('/')
+        reader = GitHubRepositoryReader(
+            github_token=None,
+            owner=owner,
+            repo=repo_name,
+            filter_directories=[["docs"], ["documentation"], ["doc"]]
+        )
+        
+        documents = reader.load_data(branch="main")
+        if not documents:
+            documents = reader.load_data(branch="master")
+            
+        if not documents:
+            raise HTTPException(400, "No documents found in repository")
+        
+        # Native indexing
+        client = get_qdrant_client()
+        vector_store = QdrantVectorStore(client=client, collection_name=f"docs_{req.collection_name}")
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+        
+        index = VectorStoreIndex.from_documents(
+            documents=documents,
+            storage_context=storage_context,
+            show_progress=True
+        )
+        
+        return {
+            "success": True,
+            "indexed": True,
+            "docs_count": len(documents),
+            "collection": f"docs_{req.collection_name}",
+            "repo": req.repo
+        }
+        
+    except Exception as e:
+        raise HTTPException(400, str(e))
