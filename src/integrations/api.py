@@ -13,6 +13,47 @@ import os
 # Clean environment for OpenAI
 app = FastAPI(title="AI Documentation Intelligence API", version="2.0.0")
 
+# === BASIC HEALTH ENDPOINTS ===
+@app.get("/")
+async def root():
+    """Root endpoint - API information and basic usage"""
+    return {
+        "name": "Semantic Search Service",
+        "version": "2.0.0", 
+        "description": "Enterprise-grade semantic search powered by LlamaIndex PropertyGraphIndex",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "search": "/search",
+            "index": "/index"
+        },
+        "status": "online"
+    }
+
+@app.get("/health")
+async def health():
+    """Health check endpoint with system status"""
+    try:
+        # Check Qdrant connection
+        from src.core.config import get_qdrant_client
+        client = get_qdrant_client()
+        collections = client.get_collections()
+        qdrant_status = "connected"
+        collection_count = len(collections.collections)
+    except Exception as e:
+        qdrant_status = f"error: {str(e)}"
+        collection_count = 0
+    
+    return {
+        "status": "healthy",
+        "service": "semantic-search-service",
+        "timestamp": "2025-01-09T00:00:00Z",
+        "components": {
+            "qdrant": qdrant_status,
+            "collections": collection_count
+        }
+    }
+
 # Import functions directly - TRUE 95/5 pattern
 from src.core import semantic_search, doc_search
 from src.core.doc_intelligence import get_doc_intelligence
@@ -406,33 +447,29 @@ def analyze_overview(req: AnalyzeOverviewRequest) -> Dict[str, Any]:
             except:
                 result["structure"] = "Tree command not available"
         
-        # Basic pattern detection from files
+        # Native semantic pattern detection using PropertyGraphIndex
         if "patterns" in req.include:
-            patterns_found = []
-            # Check for key files that indicate patterns
-            if (project_path / "docs" / "llamaindex.md").exists():
-                patterns_found.append("LlamaIndex documentation")
-            if any(f.name.startswith("semantic") for f in project_path.glob("*.py")):
-                patterns_found.append("Semantic search implementation")
-            if (project_path / "api.py").exists():
-                patterns_found.append("REST API")
-            result["patterns"] = patterns_found if patterns_found else ["Basic Python project"]
+            project_name = project_path.name
+            from src.core.index_helper import get_index, index_exists
+            
+            if index_exists(project_name):
+                query_engine = get_index(project_name).as_query_engine()
+                patterns_response = query_engine.query("Identify architectural patterns, frameworks, and design patterns used in this codebase")
+                result["patterns"] = [str(patterns_response)]
+            else:
+                result["patterns"] = [f"Project '{project_name}' not indexed for semantic analysis"]
         
-        # Simple violations check (just check for common anti-patterns in file names)
+        # Native violation detection using PropertyGraphIndex and sophisticated prompts
         if "violations" in req.include:
-            violations = []
-            # Check for obvious violations
-            if any("test" in f.name and "test_" not in f.name for f in project_path.glob("*.py")):
-                violations.append("Non-standard test file naming")
-            if len(list(project_path.glob("*.py"))) > 20:
-                violations.append("Many Python files - consider modularization")
-            result["violations"] = violations if violations else ["No obvious violations"]
+            project_name = project_path.name
+            from src.core.semantic_search import find_violations
+            result["violations"] = find_violations(project_name)
         
         # Identify important files
         result["important_files"] = {
             "Documentation": [f.name for f in (project_path / "docs").glob("*.md")][:3] if (project_path / "docs").exists() else [],
-            "API": [f.name for f in project_path.glob("*.py") if "api" in f.name.lower()][:3],
-            "Core": [f.name for f in project_path.glob("*search*.py")][:3]
+            "API": [str(f.relative_to(project_path)) for f in project_path.glob("**/*.py") if "api" in f.name.lower() and ".git" not in str(f) and "venv" not in str(f)][:3],
+            "Core": [str(f.relative_to(project_path)) for f in project_path.glob("**/*search*.py") if ".git" not in str(f) and "venv" not in str(f)][:3]
         }
         
         return result

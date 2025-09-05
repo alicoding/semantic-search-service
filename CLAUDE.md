@@ -15,8 +15,32 @@
 
 ## 🛑 CRITICAL WORKFLOW - NEVER SKIP
 
+### 🔍 AUTOMATED RESEARCH HOOKS (EXPERIMENTAL)
+**Performance Issue Discovered**: Current semantic search is too slow (>2min) for real-time hooks.
+**Status**: Explicit trigger mode only until performance optimized.
+
+```yaml
+research_hooks:
+  enabled: true
+  auto_research: false          # DISABLED - too slow currently  
+  explicit_trigger: ":research:" # Use :research: in prompt to trigger
+  performance_threshold: 100    # Target: <100ms for auto-research
+  cache_enabled: true
+  debug: false
+```
+
+**Usage**: Add `:research:` to your prompt to get automatic semantic search results:
+```
+:research: implement user authentication system
+```
+
+**Hook Scripts**: 
+- `scripts/hooks/research_hook.py` - UserPromptSubmit research
+- `scripts/hooks/validate_edit_hook.py` - PreToolUse validation
+- `scripts/hooks/benchmark_research.py` - Performance testing
+
 ### EVERY IMPLEMENTATION MUST:
-1. **Research First**: Use Perplexity + indexed LlamaIndex docs
+1. **Research First**: Use Perplexity + indexed LlamaIndex docs (or :research: trigger)
 2. **TEST THOROUGHLY**: Must actually work, not just compile!
    - ❌ NO "it generates sub-questions" = success
    - ✅ It must return ACTUAL RESULTS
