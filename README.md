@@ -1,4 +1,20 @@
-# AI Documentation Intelligence System
+```
+ ███████ ███████ ███    ███  █████  ███    ██ ████████ ██  ██████ 
+ ██      ██      ████  ████ ██   ██ ████   ██    ██    ██ ██      
+ ███████ █████   ██ ████ ██ ███████ ██ ██  ██    ██    ██ ██      
+      ██ ██      ██  ██  ██ ██   ██ ██  ██ ██    ██    ██ ██      
+ ███████ ███████ ██      ██ ██   ██ ██   ████    ██    ██  ██████ 
+                                                                   
+ ███████ ███████  █████  ██████   ██████ ██   ██                  
+ ██      ██      ██   ██ ██   ██ ██      ██   ██                  
+ ███████ █████   ███████ ██████  ██      ███████                  
+      ██ ██      ██   ██ ██   ██ ██      ██   ██                  
+ ███████ ███████ ██   ██ ██   ██  ██████ ██   ██                  
+```
+
+# Semantic Search Service
+
+Enterprise-grade semantic search powered by LlamaIndex PropertyGraphIndex.
 
 > Stop guessing API patterns. Get precise documentation snippets exactly when you need them.
 
