@@ -1,0 +1,21 @@
+# Example Configuration - Copy to config.yaml and customize
+
+# IMPORTANT: Update shared_docs_path to YOUR location!
+# Examples:
+#   Mac: /Users/yourname/ai-shared-docs/frameworks
+#   Linux: /home/yourname/ai-shared-docs/frameworks  
+#   Windows: C:/ai-shared-docs/frameworks
+
+documentation:
+  # CHANGE THIS PATH TO YOUR LOCATION
+  shared_docs_path: /path/to/your/ai-shared-docs/frameworks
+  
+  # Example for different systems:
+  # Mac with external drive:
+  # shared_docs_path: /Volumes/MyDrive/ai-shared-docs/frameworks
+  
+  # Linux home directory:
+  # shared_docs_path: /home/username/ai-shared-docs/frameworks
+  
+  # Windows:
+  # shared_docs_path: C:/Users/username/ai-shared-docs/frameworks

@@ -1,0 +1,137 @@
+# AI Development Intelligence System Configuration
+# Edit this file to change settings - no code changes needed!
+
+# 🔧 QUICK START: Update shared_docs_path (line 129) to your preferred location
+
+# LLM Configuration
+llm_provider: openai  # Options: openai, ollama (openai works with ElectronHub too!)
+embed_provider: openai  # Options: openai, ollama (uses HuggingFace)
+
+# Model Settings (ElectronHub models when ELECTRONHUB_API_KEY is set)
+ollama_model: llama3.1:latest
+ollama_embed_model: nomic-embed-text
+openai_model: claude-opus-4-1-20250805  # ElectronHub model! Best: claude-opus-4-1-20250805, grok-4-0709, gemini-2.5-pro
+openai_embed_model: text-embedding-3-small  # Always uses real OpenAI for embeddings
+
+# Ollama Settings (for offline/enterprise)
+ollama_base_url: http://localhost:11434
+ollama_request_timeout: 120.0
+ollama_context_window: 8000
+
+# Index Mode Settings
+index_mode: auto  # Options: graph (enterprise), basic (simple), auto (smart detection)
+# graph: PropertyGraphIndex with knowledge graphs (slower indexing, rich features)
+# basic: VectorStoreIndex only (fast indexing, simple search)
+# auto: Use graph for new projects, basic for existing without graphs
+
+# Performance Settings
+num_workers: 4  # For IngestionPipeline parallelism
+chunk_size: 512
+chunk_overlap: 50
+cache_ttl: 3600  # Redis cache TTL in seconds
+
+# Redis Cache Settings
+redis_host: localhost
+redis_port: 6380  # Using 6380 to avoid conflicts
+redis_enabled: true  # Set to false to disable caching
+
+# Vector Store Settings
+qdrant_url: http://localhost:6333
+collection_prefix: ai_intelligence_
+enable_hybrid: false  # Set to true if you have fastembed installed
+
+# Web Crawling (if needed)
+spider_api_key: ${SPIDER_API_KEY}
+confluence_user: ${CONFLUENCE_USER}
+confluence_pass: ${CONFLUENCE_PASS}
+crawl_depth: 3
+
+# API Settings
+api_port: 8000
+api_host: 0.0.0.0
+debug_mode: false
+
+# Response Time Targets (for monitoring)
+target_hook_response_ms: 100
+target_exists_response_ms: 200
+target_context_response_ms: 500
+
+# Violation Detection Settings
+violation_snippet_length: 300  # Characters to show from violation response
+
+# Indexing Configuration
+indexing:
+  # File types to index
+  file_extensions:
+    - .py
+    - .js
+    - .jsx
+    - .ts
+    - .tsx
+    - .md
+    - .mdx
+    - .txt
+    - .yml
+    - .yaml
+    - .json
+    - .toml
+    - .rst
+    - .ipynb
+  
+  # Directories/patterns to exclude
+  exclude_patterns:
+    - node_modules
+    - __pycache__
+    - .git
+    - .venv
+    - venv
+    - "*.pyc"
+    - .DS_Store
+    - dist
+    - build
+    - "*.egg-info"
+    - .pytest_cache
+    - .coverage
+    - "*.log"
+  
+  # Recursive directory traversal
+  recursive: true
+  
+  # Max file size to index (in MB)
+  max_file_size_mb: 10
+
+# Documentation Settings
+documentation:
+  # Frameworks to auto-index on setup
+  auto_index:
+    llamaindex:
+      url: https://docs.llamaindex.ai
+      enabled: true
+    nextjs:
+      url: https://nextjs.org/docs  
+      enabled: false
+    react:
+      url: https://react.dev/reference
+      enabled: false
+  
+  # Query routing strategy
+  routing:
+    llamaindex: indexed  # Use local index
+    nextjs: indexed      # Use local index when available
+    react: context7      # Use Context7
+    default: web         # Fallback to web search
+  
+  # Documentation refresh
+  refresh:
+    enabled: true
+    schedule: weekly  # Options: daily, weekly, monthly
+    frameworks:
+      - llamaindex
+  
+  # Offline mode for enterprise
+  offline_mode: false
+  offline_docs_path: ./offline_docs
+  
+  # Centralized documentation location (shared across projects)
+  # Change this path to your preferred location
+  shared_docs_path: /Volumes/AliDev/ai-shared-docs/frameworks

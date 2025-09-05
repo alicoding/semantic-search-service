@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - 6333:6333
+      - 6334:6334
+    options: >-
+      --health-cmd "curl -f http://localhost:6333/health || exit 1"
+      --health-interval 30s
+      --health-timeout 10s
+      --health-retries 5
+
+jobs:
+  test-lint-typecheck:
+    runs-on: ubuntu-latest
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+          - 6334:6334
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/health || exit 1"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-py${{ matrix.python-version }}-
+            venv-${{ runner.os }}-
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Wait for Qdrant
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:6333/health; then
+              echo "Qdrant is ready!"
+              break
+            fi
+            echo "Waiting for Qdrant... ($i/30)"
+            sleep 2
+          done
+
+      - name: Create test data
+        run: |
+          mkdir -p test_data
+          echo 'def authenticate_user(username, password):
+              if username == "admin" and password == "secret":
+                  return True
+              return False' > test_data/auth.py
+          echo 'def get_user_profile(user_id):
+              profile = {"id": user_id, "name": "John Doe", "role": "admin"}
+              return profile' > test_data/profile.py
+
+      - name: Run Qdrant tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: https://api.electronhub.ai/v1
+        run: poetry run pytest test_qdrant.py -v
+
+      - name: Ruff Lint
+        run: poetry run ruff check .
+
+      - name: Black Format Check
+        run: poetry run black --check .
+
+      - name: 🍽️ DOGFOOD - Test CLI & API
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: https://api.electronhub.ai/v1
+        run: |
+          poetry run python cli.py --help
+          poetry run python cli.py list
+          poetry run python -c "from api import app; print('API imports successfully')"
+          poetry run python -c "from mcp_server import mcp; print('MCP server imports successfully')"
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test-lint-typecheck
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Build package
+        run: poetry build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

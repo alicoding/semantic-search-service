@@ -1,0 +1,54 @@
+#!/bin/bash
+# Documentation Intelligence CLI
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+source venv/bin/activate 2>/dev/null || true
+
+case "$1" in
+    index)
+        if [ -z "$2" ]; then
+            echo "Usage: semantic-search-docs index <framework> [url]"
+            exit 1
+        fi
+        python -c "
+from src.core.doc_intelligence import get_doc_intelligence
+di = get_doc_intelligence()
+result = di.index_framework('$2', '$3' if '$3' else None)
+print(result)
+"
+        ;;
+    search)
+        if [ -z "$2" ] || [ -z "$3" ]; then
+            echo "Usage: semantic-search-docs search <query> <framework>"
+            exit 1
+        fi
+        python -c "
+from src.core.doc_intelligence import get_doc_intelligence
+di = get_doc_intelligence()
+result = di.search_pattern('$2', '$3')
+print(result)
+"
+        ;;
+    list)
+        python -c "
+from src.core.doc_intelligence import get_doc_intelligence
+di = get_doc_intelligence()
+frameworks = di.list_frameworks()
+if frameworks:
+    print('Indexed frameworks:')
+    for f in frameworks:
+        info = di.get_framework_info(f)
+        print(f'  - {f}: {info.get(\"documents\", 0)} documents')
+else:
+    print('No frameworks indexed yet')
+"
+        ;;
+    *)
+        echo "Usage: semantic-search-docs {index|search|list}"
+        echo ""
+        echo "Commands:"
+        echo "  index <framework> [url]  - Index framework documentation"
+        echo "  search <query> <framework> - Search for patterns"
+        echo "  list                      - List indexed frameworks"
+        ;;
+esac

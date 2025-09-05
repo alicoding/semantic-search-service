@@ -1,0 +1,1 @@
+{"index_store/data": {"claude-parser": {"__type__": "vector_store", "__data__": "{\"index_id\": \"claude-parser\", \"summary\": null, \"nodes_dict\": {}, \"doc_id_dict\": {}, \"embeddings_dict\": {}}"}}}

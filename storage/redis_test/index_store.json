@@ -1,0 +1,1 @@
+{"index_store/data": {"redis_test": {"__type__": "vector_store", "__data__": "{\"index_id\": \"redis_test\", \"summary\": null, \"nodes_dict\": {}, \"doc_id_dict\": {}, \"embeddings_dict\": {}}"}}}

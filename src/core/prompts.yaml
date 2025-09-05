@@ -1,0 +1,39 @@
+# Centralized Prompts Configuration
+# Following OCP (Open/Closed Principle) - extend by modifying YAML, not code
+
+violations:
+  solid_check: |
+    Identify violations of SOLID principles, DRY patterns, and DDD best practices in this codebase.
+    List specific issues with file names and line context. Focus on:
+    1. Single Responsibility violations
+    2. Open/Closed violations  
+    3. Dependency Inversion issues
+    4. Code duplication
+    5. Poor domain modeling
+    
+  quick_check: |
+    Quick scan for obvious code quality issues: duplicated code, god classes, or circular dependencies.
+
+library_suggestions:
+  default: "Suggest Python libraries for: {task}"
+  
+  with_context: |
+    Given the task: {task}
+    And the project type: {project_type}
+    Suggest the most appropriate Python libraries with brief explanations.
+
+documentation:
+  how_to: "How to {task} with code example step by step implementation"
+  
+  pattern_search: "{query} code example implementation"
+  
+  comparison: |
+    Compare how {library1} and {library2} handle {task}.
+    Show code examples from each.
+
+complex_queries:
+  break_down: |
+    Break this complex question into smaller sub-questions: {query}
+    
+  synthesis: |
+    Based on the sub-question answers, provide a comprehensive response to: {query}

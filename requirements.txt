@@ -1,0 +1,26 @@
+# TRUE 95/5 Dependencies - LlamaIndex does everything
+
+# Core
+llama-index>=0.13.0
+llama-index-vector-stores-qdrant
+llama-index-llms-openai
+llama-index-llms-openai-like  # For ElectronHub
+llama-index-llms-ollama
+llama-index-embeddings-openai
+llama-index-embeddings-ollama
+
+# Storage
+qdrant-client
+redis
+
+# API (thin wrapper only)
+fastapi
+uvicorn
+
+# Utils
+python-dotenv
+pyyaml
+
+# Optional (for enhanced features)
+# llama-index-readers-web  # For web crawling
+# fastembed  # For hybrid search

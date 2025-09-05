@@ -1,0 +1,26 @@
+#!/bin/bash
+# Auto-Documentation Git Hook
+# Regenerates API documentation on every commit
+
+echo "🤖 Regenerating API documentation..."
+
+# Change to project root
+cd "$(git rev-parse --show-toplevel)"
+
+# Run auto-documentation generation
+python src/core/auto_docs.py generate
+
+# Add updated docs to commit if they changed
+if [ -f "docs/API_REFERENCE.md" ]; then
+    git add docs/API_REFERENCE.md
+    echo "✅ API documentation updated and staged"
+fi
+
+# Optional: Generate function signatures
+python src/core/auto_docs.py functions 2>/dev/null
+if [ -f "docs/FUNCTION_SIGNATURES.md" ]; then
+    git add docs/FUNCTION_SIGNATURES.md
+    echo "✅ Function signatures updated and staged"
+fi
+
+echo "📚 Auto-documentation complete"
