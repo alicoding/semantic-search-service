@@ -10,6 +10,8 @@ import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 from typing import Optional, Dict, Any
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 from llama_index.core import Settings
 from llama_index.llms.ollama import Ollama
 from llama_index.llms.openai import OpenAI
@@ -22,14 +24,80 @@ from llama_index.core.node_parser import SentenceSplitter
 load_dotenv()
 
 
+class AppConfig(BaseSettings):
+    """
+    Modern Pydantic configuration (2025 pattern)
+    Eliminates hardcoded defaults, provides type validation and documentation
+    """
+    # LLM Configuration
+    llm_provider: str = "openai"
+    embed_provider: str = "openai"
+    ollama_model: str = "llama3.1:latest"
+    openai_model: str = "gpt-4"
+    openai_embed_model: str = "text-embedding-3-small"
+    fast_model: str = "gemini-2.5-flash"
+    complex_model: str = "claude-opus-4-1-20250805"
+    complex_alt_model: str = "gemini-2.5-pro"
+    
+    # Service Configuration
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_request_timeout: float = 120.0
+    ollama_context_window: int = 8000
+    num_workers: int = 4
+    
+    # Indexing Configuration
+    chunk_size: int = 512
+    chunk_overlap: int = 50
+    
+    # Storage Configuration
+    qdrant_url: str = "http://localhost:6333"
+    collection_prefix: str = "ai_intelligence_"
+    redis_host: str = "localhost"
+    redis_port: int = 6380
+    cache_ttl: int = 3600
+    
+    # API Configuration
+    openai_api_key: Optional[str] = None
+    electronhub_api_key: Optional[str] = None
+    electronhub_base_url: Optional[str] = None
+    spider_api_key: Optional[str] = None
+    confluence_user: Optional[str] = None
+    confluence_pass: Optional[str] = None
+    
+    # Additional Configuration
+    ollama_embed_model: str = "nomic-embed-text"
+    index_mode: str = "auto"
+    redis_enabled: bool = True
+    enable_hybrid: bool = False
+    crawl_depth: int = 3
+    api_port: int = 8000
+    api_host: str = "0.0.0.0"
+    debug_mode: bool = False
+    
+    # Performance Configuration  
+    target_hook_response_ms: int = 100
+    target_exists_response_ms: int = 200
+    target_context_response_ms: int = 500
+    violation_snippet_length: int = 300
+    
+    # Complex nested configs (allow extra)
+    indexing: Optional[Dict[str, Any]] = None
+    documentation: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        env_file = '.env'
+        case_sensitive = False
+        extra = 'allow'  # Allow extra fields for backward compatibility
+
+
 class ConfigurationResourceManager:
     """
-    Centralized configuration resource manager
-    Prevents duplicate config loading by sharing single config instance
+    Centralized configuration resource manager using Pydantic BaseSettings (2025 pattern)
+    Eliminates hardcoded defaults and provides type validation
     """
     
     _instance: Optional['ConfigurationResourceManager'] = None
-    _config: Optional[Dict[str, Any]] = None
+    _config: Optional[AppConfig] = None
     _initialized: bool = False
     
     def __new__(cls):
@@ -38,45 +106,35 @@ class ConfigurationResourceManager:
         return cls._instance
     
     @property
-    def config(self) -> Dict[str, Any]:
-        """Get shared config (lazy initialization)"""
+    def config(self) -> AppConfig:
+        """Get shared Pydantic config (lazy initialization)"""
         if self._config is None:
             self._config = self._load_config()
         return self._config
     
-    def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from yaml or environment variables"""
+    def _load_config(self) -> AppConfig:
+        """
+        Load configuration using modern Pydantic BaseSettings (2025 pattern)
+        Framework handles: type validation, env var parsing, defaults
+        We handle: YAML override logic only (5%)
+        """
         config_path = Path("config.yaml")
         
         if config_path.exists():
+            # YAML overrides (optional)
             with open(config_path) as f:
-                config = yaml.safe_load(f)
-                # Replace environment variables
-                for key, value in config.items():
+                yaml_config = yaml.safe_load(f)
+                # Replace environment variables in YAML
+                for key, value in yaml_config.items():
                     if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
                         env_var = value[2:-1]
-                        config[key] = os.getenv(env_var, value)
+                        yaml_config[key] = os.getenv(env_var, value)
+                return AppConfig(**yaml_config)
         else:
-            # Fallback to environment variables
-            config = {
-                "llm_provider": os.getenv("LLM_PROVIDER", "openai"),
-                "embed_provider": os.getenv("EMBED_PROVIDER", "openai"),
-                "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.1:latest"),
-                "openai_model": os.getenv("OPENAI_MODEL", "gpt-4"),
-                "openai_embed_model": os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small"),
-                "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-                "ollama_request_timeout": float(os.getenv("OLLAMA_REQUEST_TIMEOUT", "120.0")),
-                "ollama_context_window": int(os.getenv("OLLAMA_CONTEXT_WINDOW", "8000")),
-                "num_workers": int(os.getenv("NUM_WORKERS", "4")),
-                "chunk_size": int(os.getenv("CHUNK_SIZE", "512")),
-                "chunk_overlap": int(os.getenv("CHUNK_OVERLAP", "50")),
-                "qdrant_url": os.getenv("QDRANT_URL", "http://localhost:6333"),
-                "collection_prefix": os.getenv("COLLECTION_PREFIX", "ai_intelligence_"),
-            }
-        
-        return config
+            # Pure Pydantic - framework does 95% of work
+            return AppConfig()
     
-    def initialize_settings(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def initialize_settings(self, config: Optional[AppConfig] = None) -> None:
         """Initialize LlamaIndex Settings - Native way (called once)"""
         if self._initialized:
             return
@@ -92,33 +150,33 @@ class ConfigurationResourceManager:
         Settings._config = config
         self._initialized = True
     
-    def _setup_llm_models(self, config: Dict[str, Any]) -> None:
+    def _setup_llm_models(self, config: AppConfig) -> None:
         """Setup LLM models based on configuration"""
         electronhub_key = os.getenv("ELECTRONHUB_API_KEY")
         electronhub_base = os.getenv("ELECTRONHUB_BASE_URL")
         
-        if config["llm_provider"] == "ollama":
+        if config.llm_provider == "ollama":
             # Ollama setup - single model
             Settings.llm = Settings.llm_fast = Settings.llm_complex = Ollama(
-                model=config["ollama_model"],
-                base_url=config.get("ollama_base_url", "http://localhost:11434"),
-                request_timeout=config.get("ollama_request_timeout", 120.0),
-                context_window=config.get("ollama_context_window", 8000),
+                model=config.ollama_model,
+                base_url=config.ollama_base_url,
+                request_timeout=config.ollama_request_timeout,
+                context_window=config.ollama_context_window,
             )
         elif electronhub_key and electronhub_base:
             self._setup_electronhub_models(config, electronhub_key, electronhub_base)
         else:
             # Fallback to standard OpenAI
             Settings.llm = Settings.llm_fast = Settings.llm_complex = OpenAI(
-                model=config["openai_model"],
+                model=config.openai_model,
                 api_key=os.getenv("OPENAI_API_KEY"),
             )
     
-    def _setup_electronhub_models(self, config: Dict[str, Any], api_key: str, api_base: str) -> None:
+    def _setup_electronhub_models(self, config: AppConfig, api_key: str, api_base: str) -> None:
         """Setup ElectronHub dual-model configuration"""
         # Fast model - Gemini 2.5 Flash
         Settings.llm_fast = OpenAILike(
-            model=config.get("fast_model", "gemini-2.5-flash"),
+            model=config.fast_model,
             api_key=api_key,
             api_base=api_base,
             is_chat_model=True,
@@ -128,7 +186,7 @@ class ConfigurationResourceManager:
         
         # Complex model - Claude Opus 4.1
         Settings.llm_complex = OpenAILike(
-            model=config.get("complex_model", "claude-opus-4-1-20250805"), 
+            model=config.complex_model, 
             api_key=api_key,
             api_base=api_base,
             is_chat_model=True,
@@ -138,7 +196,7 @@ class ConfigurationResourceManager:
         
         # Alternative complex model - Gemini 2.5 Pro
         Settings.llm_complex_alt = OpenAILike(
-            model=config.get("complex_alt_model", "gemini-2.5-pro"),
+            model=config.complex_alt_model,
             api_key=api_key,
             api_base=api_base,
             is_chat_model=True,
@@ -149,31 +207,31 @@ class ConfigurationResourceManager:
         # Default to fast model
         Settings.llm = Settings.llm_fast
     
-    def _setup_embeddings(self, config: Dict[str, Any]) -> None:
+    def _setup_embeddings(self, config: AppConfig) -> None:
         """Setup embedding models based on configuration"""
-        if config["embed_provider"] == "ollama":
+        if config.embed_provider == "ollama":
             Settings.embed_model = OllamaEmbedding(
-                model_name=config.get("ollama_embed_model", "nomic-embed-text"),
-                base_url=config.get("ollama_base_url", "http://localhost:11434"),
+                model_name=config.ollama_embed_model,
+                base_url=config.ollama_base_url,
             )
         else:
             Settings.embed_model = OpenAIEmbedding(
-                model=config.get("openai_embed_model", "text-embedding-3-small"),
+                model=config.openai_embed_model,
                 api_key=os.getenv("OPENAI_API_KEY"),
                 max_requests_per_minute=60,  # Prevent rate limiting
                 max_query_length=8191,
             )
     
-    def _setup_node_parser(self, config: Dict[str, Any]) -> None:
+    def _setup_node_parser(self, config: AppConfig) -> None:
         """Setup node parser based on configuration"""
         Settings.node_parser = SentenceSplitter(
-            chunk_size=config.get("chunk_size", 512),
-            chunk_overlap=config.get("chunk_overlap", 50),
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
         )
     
     def get_collection_name(self, project: str) -> str:
         """Get collection name with configured prefix"""
-        prefix = self.config.get("collection_prefix", "ai_intelligence_")
+        prefix = self.config.collection_prefix
         return f"{prefix}{project}"
     
     def get_configured_reader(self, path: str, filename_as_id: bool = False):

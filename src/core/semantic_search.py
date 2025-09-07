@@ -133,7 +133,14 @@ def refresh_project(name: str, path: str) -> Dict[str, Any]:
     return _semantic_search.intelligence.intelligence.refresh_project(path, name)
 
 def check_exists(component: str, project: str) -> Dict[str, Any]:
-    """Check component existence using micro-component pattern"""
+    """Check component existence using micro-component pattern (LlamaIndex 2025 DIP)"""
     from .components.analysis.existence import create_component_existence_checker
-    checker = create_component_existence_checker()
+    from .resources import get_intelligence_resource
+    from .resources.cache_manager import get_cache_manager
+    
+    # Proper DIP: Inject dependencies explicitly
+    checker = create_component_existence_checker(
+        get_intelligence_resource(),
+        get_cache_manager()
+    )
     return checker.check_exists(component, project)

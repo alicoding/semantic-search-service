@@ -5,26 +5,27 @@ Single Responsibility: Check if components exist in codebase using semantic sear
 Pattern: 55 LOC focused component with proper DI following CLAUDE.md
 """
 
-from typing import Dict, Any, Optional
-from ...resources import get_intelligence_resource, IntelligenceResourceManager
-from ...resources.cache_manager import get_cache_manager, CacheResourceManager
+from typing import Dict, Any, Protocol
+from ...resources import IntelligenceResourceManager
+from ...resources.cache_manager import CacheResourceManager
 
 
 class ComponentExistenceChecker:
     """
     Real component existence checker using native LlamaIndex semantic search
-    Component Pattern: Small, focused, resource-injected (DIP compliance)
+    Component Pattern: Small, focused, resource-injected (proper DIP compliance)
+    LlamaIndex 2025: Full DIP with required dependencies, no internal creation
     """
     
     def __init__(self, 
-                 intelligence_resource: Optional[IntelligenceResourceManager] = None,
-                 cache_resource: Optional[CacheResourceManager] = None):
+                 intelligence_resource: IntelligenceResourceManager,
+                 cache_resource: CacheResourceManager):
         """
-        Initialize with shared resource managers (proper DIP pattern)
-        Uses singletons if none provided (prevents duplicate resources)
+        Initialize with explicit dependencies (proper DIP pattern - LlamaIndex 2025)
+        All dependencies must be provided externally (no internal creation)
         """
-        self.intelligence = intelligence_resource or get_intelligence_resource()
-        self.cache = cache_resource or get_cache_manager()
+        self.intelligence = intelligence_resource
+        self.cache = cache_resource
 
     def check_exists(self, component: str, project: str) -> Dict[str, Any]:
         """
@@ -74,7 +75,10 @@ class ComponentExistenceChecker:
             }
 
 
-# Component factory for easy instantiation
-def create_component_existence_checker() -> ComponentExistenceChecker:
-    """Create component existence checker with shared resources (proper DI)"""
-    return ComponentExistenceChecker()
+# Component factory for easy instantiation (LlamaIndex 2025 DIP pattern)
+def create_component_existence_checker(
+    intelligence_resource: IntelligenceResourceManager,
+    cache_resource: CacheResourceManager
+) -> ComponentExistenceChecker:
+    """Create component existence checker with explicit dependencies (proper DIP)"""
+    return ComponentExistenceChecker(intelligence_resource, cache_resource)

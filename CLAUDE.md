@@ -56,30 +56,64 @@ research_hooks:
 5. **Verify**: Check API_REFERENCE.md updated
 
 ### WHEN BLOCKED:
-1. Search indexed docs: `doc_search.py`
-2. Use Perplexity for patterns
-3. STOP and ask user - NO GUESSING
+1. **READ existing files FULLY** - Don't assume what exists
+2. **Check folder structure** - Let organization guide placement  
+3. Search indexed docs: `doc_search.py`
+4. Use Perplexity for patterns
+5. STOP and ask user - **ZERO ASSUMPTIONS**
 
-## 🚀 PROJECT STATUS: 837 LOC (TRUE 95/5)
+## 🚀 LLM-NATIVE LAYERED ARCHITECTURE (LNLA)
+
+### LNLA WORKFLOW (Memory Signal Pattern)
+**Micro-context trigger: "Follow LNLA workflow"**
+
+1. **EXPLORE** - Read codebase structure, understand where files belong
+2. **RESEARCH** - Perplexity for modern patterns, check existing solutions  
+3. **PLAN** - List requirements (API keys, dependencies, interfaces)
+4. **TDD** - Write failing test first (prevents completion theatre)
+5. **RED** - Confirm test fails as expected
+6. **IMPLEMENT** - Build feature to pass test
+7. **GREEN** - Verify test passes with real data/APIs
+8. **COMMIT** - Only working, tested code
+
+**Never Assume Rule**: If unclear about requirements → STOP and ask user
+
+### LNLA HOOK PATTERN (Cascading 95/5)
+**Git hooks follow LNLA principles:**
+- **<50 LOC hooks** - Minimal trigger code only
+- **95% delegation** - Semantic search service does heavy lifting
+- **Cascading events** - Commit → Hook → Auto-docs → Living context
+- **Memory activity** - TodoWrite reinforces workflow patterns
+
+### CORE PRINCIPLES
+- **<100 LOC per file** - LLM context optimization
+- **Cascading 95/5** - Each layer delegates 95% to framework
+- **One domain per file** - Clear boundaries
+- **Zero variants** - No v2, no alternatives
+- **Migration isolation** - Framework changes in 1-2 files max
+
+### LAYERED STRUCTURE
+```
+Business Logic    ← 95% from Service Layer
+Service Layer     ← 95% from Core Layer  
+Core Layer        ← 95% from LlamaIndex
+LlamaIndex        ← 95% from Libraries
+```
+
+### NAMING RULES
+- ✅ Update in place - same file, same names
+- ❌ NEVER: _v2, _new, _updated suffixes
+- ❌ NEVER: Multiple files same purpose
+- ✅ Structure guides LLM: scripts/, components/, integrations/
 
 ### ABSOLUTE RULES
-- **NO MOCKS** - Real APIs only
-- **NO PIVOTING** - Fix root causes
-- **NO WORKAROUNDS** - Native patterns only
-- **95/5 PRINCIPLE** - Framework does 95%
+- **Framework does 95%** - Don't reinvent
+- **Every file serves purpose** - Zero unused code
+- **Centralized solutions** - DRY at architecture level
+- **READ FILES FULLY** - Never assume, always get complete context
+- **Structure determines placement** - Folder organization guides decisions
+- **No assumption-based coding** - If unsure, read existing implementation
 
-### What to Use
-- `VectorStoreIndex.from_documents()` - One-liner indexing
-- `index.as_query_engine().query()` - One-liner search
-- Settings singleton for config
-- Git hooks for auto-docs
-
-### What NOT to Do
-- ❌ Custom implementations
-- ❌ Inheritance (use composition)
-- ❌ Manual caching
-- ❌ Multi-line what can be one-line
-- ❌ Hard dependencies in constructors
 
 ## 🏗️ MANDATORY DIP PATTERN
 **ALWAYS inject dependencies through constructor - NEVER create inside classes**

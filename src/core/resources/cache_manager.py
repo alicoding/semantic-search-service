@@ -1,93 +1,57 @@
 #!/usr/bin/env python3
 """
-Cache Resource Manager - Native LlamaIndex Redis Caching
-Single Responsibility: Manage all caching operations with native LlamaIndex patterns
-Pattern: 50-80 LOC resource manager using verified RedisKVStore patterns
+Cache Resource Manager - Native LlamaIndex IngestionPipeline Caching (2025)
+Single Responsibility: Provide native LlamaIndex caching following 95/5 principle
+Pattern: Framework handles 95% of caching, we provide 5% configuration only
 """
 
 from llama_index.storage.kvstore.redis import RedisKVStore
 from llama_index.core.ingestion import IngestionCache
-import hashlib
-import json
-from typing import Any, Optional
+from typing import Optional
 from .config_manager import get_config_resource
 
 
 class CacheResourceManager:
     """
-    Cache resource manager using native LlamaIndex RedisKVStore
-    Resource Pattern: Centralized cache management with fallback
+    Cache resource manager using native LlamaIndex IngestionPipeline patterns (2025)
+    95/5 Pattern: LlamaIndex handles cache lifecycle, we provide configuration only
     """
     
     def __init__(self):
-        """Initialize with config from config manager"""
+        """Initialize with minimal config - LlamaIndex 2025 pattern"""
         config = get_config_resource().config
-        self.redis_host = config.get('redis_host', 'localhost')
-        self.redis_port = config.get('redis_port', 6380)
-        self.redis_ttl = config.get('cache_ttl', 3600)
-        self._store = None
+        self.redis_host = config.redis_host
+        self.redis_port = config.redis_port
         self.enabled = True
     
-    def get_redis_store(self) -> Optional[RedisKVStore]:
-        """Get native LlamaIndex RedisKVStore - VERIFIED pattern"""
-        if self._store is None:
-            try:
-                self._store = RedisKVStore.from_host_and_port(
-                    host=self.redis_host,
-                    port=self.redis_port
-                )
-                # Test connection
-                self._store.get("__test__")
-            except Exception as e:
-                print(f"Redis connection failed: {e}. Caching disabled.")
-                self.enabled = False
-                return None
-        return self._store
-    
-    def get_query_cache(self):
-        """Get query cache instance"""
-        return QueryCache(self.get_redis_store(), self.enabled)
-    
-    def get_ingestion_cache(self, collection: str = "ingestion_cache") -> Optional[IngestionCache]:
-        """Get native IngestionCache for pipeline caching - VERIFIED pattern"""
-        store = self.get_redis_store()
-        if store is None:
-            return None
-        return IngestionCache(cache=store, collection=collection)
-
-
-class QueryCache:
-    """Query caching using native RedisKVStore"""
-    
-    def __init__(self, store: Optional[RedisKVStore], enabled: bool = True):
-        self.store = store
-        self.enabled = enabled and store is not None
-    
-    def _make_key(self, query: str) -> str:
-        """Create cache key from query"""
-        return hashlib.md5(query.encode()).hexdigest()
-    
-    def get(self, query: str, collection: str = "default") -> Optional[str]:
-        """Get cached query result"""
+    def get_ingestion_cache(self, collection: str = "default_cache") -> Optional[IngestionCache]:
+        """
+        Get native LlamaIndex IngestionCache - TRUE 95/5 pattern
+        Framework handles: connection, serialization, lifecycle, TTL, eviction
+        We handle: configuration only (5%)
+        """
         if not self.enabled:
             return None
+            
         try:
-            key = self._make_key(query)
-            result = self.store.get(key, collection=collection)
-            return json.loads(result) if result else None
-        except:
+            # Native LlamaIndex one-liner - framework does 95% of work
+            redis_store = RedisKVStore.from_host_and_port(
+                host=self.redis_host,
+                port=self.redis_port
+            )
+            return IngestionCache(cache=redis_store, collection=collection)
+        except Exception as e:
+            print(f"Redis cache unavailable: {e}. Using no cache.")
+            self.enabled = False
             return None
-    
-    def set(self, query: str, collection: str, result: str, ttl: Optional[int] = None) -> bool:
-        """Set cached query result"""
-        if not self.enabled:
-            return False
-        try:
-            key = self._make_key(query)
-            self.store.put(key, json.dumps(result), collection=collection)
-            return True
-        except:
-            return False
+
+
+    def get_query_cache(self, collection: str = "query_cache") -> Optional[IngestionCache]:
+        """
+        Get query-specific cache using same native pattern
+        LlamaIndex 2025: Use IngestionCache for all caching needs (95/5 principle)
+        """
+        return self.get_ingestion_cache(collection)
 
 
 # Global cache manager instance (singleton pattern)

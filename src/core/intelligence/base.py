@@ -33,15 +33,4 @@ class IndexStrategy(ABC):
         pass
 
 
-class CacheStrategy(ABC):
-    """Abstract strategy for caching"""
-    
-    @abstractmethod
-    def get(self, key: str, namespace: str) -> Optional[str]:
-        """Get cached value"""
-        pass
-    
-    @abstractmethod
-    def set(self, key: str, namespace: str, value: str, ttl: int = 3600) -> None:
-        """Set cached value"""
-        pass
+# CacheStrategy removed - using native LlamaIndex caching (95/5 principle)

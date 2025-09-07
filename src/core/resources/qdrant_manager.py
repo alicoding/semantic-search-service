@@ -30,7 +30,7 @@ class QdrantResourceManager:
         """Get shared Qdrant client (lazy initialization)"""
         if self._qdrant_client is None:
             config_manager = get_config_resource()
-            self._qdrant_client = QdrantClient(url=config_manager.config["qdrant_url"])
+            self._qdrant_client = QdrantClient(url=config_manager.config.qdrant_url)
         return self._qdrant_client
     
     @property
@@ -40,7 +40,7 @@ class QdrantResourceManager:
             try:
                 from qdrant_client import AsyncQdrantClient
                 config_manager = get_config_resource()
-                self._async_qdrant_client = AsyncQdrantClient(url=config_manager.config["qdrant_url"])
+                self._async_qdrant_client = AsyncQdrantClient(url=config_manager.config.qdrant_url)
             except ImportError:
                 # Fallback to sync client if async not available
                 return self.client

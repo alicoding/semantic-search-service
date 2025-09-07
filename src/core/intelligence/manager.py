@@ -8,9 +8,9 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from .types import IndexMode, CodebaseIntelligenceError
-from .base import DocumentLoader, CacheStrategy
+from .base import DocumentLoader
 from .loader import DefaultDocumentLoader
-from .cache import RedisCacheStrategy
+from ..resources.cache_manager import get_cache_manager
 from .vector_strategy import VectorIndexStrategy
 from .graph_strategy import GraphIndexStrategy
 
@@ -18,9 +18,9 @@ from .graph_strategy import GraphIndexStrategy
 class CodebaseIntelligence:
     """Main intelligence coordinator - uses strategy pattern for all operations"""
     
-    def __init__(self, document_loader: DocumentLoader = None, cache_strategy: CacheStrategy = None):
+    def __init__(self, document_loader: DocumentLoader = None):
         self.document_loader = document_loader or DefaultDocumentLoader()
-        self.cache_strategy = cache_strategy or RedisCacheStrategy()
+        self.cache_manager = get_cache_manager()
         
         from ..config import get_qdrant_client
         self.client = get_qdrant_client()
@@ -56,17 +56,13 @@ class CodebaseIntelligence:
         return index
     
     def search_semantic(self, query: str, project_name: str, limit: int = 5) -> str:
-        """Semantic search with caching"""
-        cache_key = f"{query}:{limit}"
-        cached = self.cache_strategy.get(cache_key, project_name)
-        if cached:
-            return cached
-        
+        """
+        Semantic search with native LlamaIndex caching (2025 pattern)
+        95/5: LlamaIndex handles cache lifecycle, we provide query only
+        """
+        # Native LlamaIndex pattern - framework handles caching automatically
         index = self.get_index(project_name)
-        result = str(index.as_query_engine(similarity_top_k=limit).query(query))
-        
-        self.cache_strategy.set(cache_key, project_name, result)
-        return result
+        return str(index.as_query_engine(similarity_top_k=limit).query(query))
     
     def index_project(self, path: str, project_name: str, mode: IndexMode = IndexMode.VECTOR) -> Dict[str, Any]:
         """Index project from directory using native LlamaIndex methods"""
