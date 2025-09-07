@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+**/__pycache__/
+*.pyc
 *.so
 .Python
 build/
@@ -94,6 +96,10 @@ temp_docs/
 chroma_data/
 qdrant_storage/
 test_data/
+
+# Storage directories (indexed documents)
+storage/docs_*/
+storage/workflows/
 poetry.lock
 
 # Claude Code specific
@@ -103,3 +109,25 @@ docs/research/
 scripts/research.py
 CLAUDE.md.mypy_cache/
 api.log
+
+# Migration and backup files
+*_old_backup.py
+*_backup.py
+*_v2.py
+*_old.py
+*.bak
+*.orig
+
+# MCP and API server artifacts
+mcp_server.log
+fastapi_server.log
+uvicorn.log
+
+# Development artifacts
+benchmark_*.py
+temp_*.py
+
+# Migration tracking files
+*MIGRATION*TRACKER*.md
+DAILY_PROGRESS.md
+docs/generated/

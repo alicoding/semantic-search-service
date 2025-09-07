@@ -10,7 +10,8 @@ from typing import Dict, List
 from pathlib import Path
 from llama_index.core import Document, VectorStoreIndex
 from llama_index.vector_stores.qdrant import QdrantVectorStore
-from .config import get_qdrant_client, CONFIG, get_configured_reader
+from ..config import get_qdrant_client, load_config, get_configured_reader
+CONFIG = load_config()
 
 def refresh_documentation_collection(collection_name: str, docs_path: str) -> Dict:
     """Refresh documentation using native LlamaIndex refresh_ref_docs - TRUE 95/5"""

@@ -30,6 +30,34 @@ documentation:
   comparison: |
     Compare how {library1} and {library2} handle {task}.
     Show code examples from each.
+  
+  universal_extraction: |
+    Analyze this {languages} codebase using {frameworks} frameworks for project: {project_name}
+    
+    Generate comprehensive developer documentation including:
+    
+    ## Core Components
+    - All API endpoints, functions, classes, and modules
+    - Code structure and architecture overview
+    - Multi-language components and their interactions
+    
+    ## API Documentation  
+    - HTTP endpoints with methods, paths, parameters
+    - Function signatures and class definitions
+    - Input/output examples and response formats
+    
+    ## Integration Patterns
+    - Usage examples and integration patterns
+    - Configuration and setup instructions
+    - Common workflows and best practices
+    
+    ## Technical Details
+    - Framework-specific implementations
+    - Database schemas and data models (if present)
+    - Authentication and authorization patterns
+    
+    Organize by logical categories, provide clear examples, and include file locations.
+    Make it comprehensive yet practical for developers to understand and use.
 
 complex_queries:
   break_down: |

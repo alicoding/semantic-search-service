@@ -10,7 +10,14 @@ embed_provider: openai  # Options: openai, ollama (uses HuggingFace)
 # Model Settings (ElectronHub models when ELECTRONHUB_API_KEY is set)
 ollama_model: llama3.1:latest
 ollama_embed_model: nomic-embed-text
-openai_model: claude-opus-4-1-20250805  # ElectronHub model! Best: claude-opus-4-1-20250805, grok-4-0709, gemini-2.5-pro
+
+# Dual-Model Strategy: Fast + Complex
+fast_model: gemini-2.5-flash              # Fast & cheap for 90% of tasks ($0.3/$2.5)
+complex_model: claude-opus-4-1-20250805   # Complex reasoning ($120/$200)  
+complex_alt_model: gemini-2.5-pro         # Alternative complex model ($1.25/$10)
+
+# Legacy support (uses fast_model)
+openai_model: gemini-2.5-flash
 openai_embed_model: text-embedding-3-small  # Always uses real OpenAI for embeddings
 
 # Ollama Settings (for offline/enterprise)
@@ -61,7 +68,14 @@ violation_snippet_length: 300  # Characters to show from violation response
 
 # Indexing Configuration
 indexing:
-  # File types to index
+  # Native 2025 LlamaIndex pattern: Explicit include paths (recommended)
+  include_paths:
+    - src/core
+    - src/integrations
+    - config.yaml
+    - CLAUDE.md
+  
+  # Legacy settings for fallback compatibility
   file_extensions:
     - .py
     - .js
@@ -78,7 +92,7 @@ indexing:
     - .rst
     - .ipynb
   
-  # Directories/patterns to exclude
+  # Directories/patterns to exclude (only used when include_paths not set)
   exclude_patterns:
     - node_modules
     - __pycache__
@@ -93,6 +107,14 @@ indexing:
     - .pytest_cache
     - .coverage
     - "*.log"
+    - storage
+    - temp_docs
+    - tests
+    - scripts/old
+    - docs/archive
+    - "MIGRATION_TRACKER.md"
+    - "COMPLETE_MIGRATION_TRACKER.md"
+    - "DAILY_PROGRESS.md"
   
   # Recursive directory traversal
   recursive: true

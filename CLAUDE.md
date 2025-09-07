@@ -79,6 +79,24 @@ research_hooks:
 - ❌ Inheritance (use composition)
 - ❌ Manual caching
 - ❌ Multi-line what can be one-line
+- ❌ Hard dependencies in constructors
+
+## 🏗️ MANDATORY DIP PATTERN
+**ALWAYS inject dependencies through constructor - NEVER create inside classes**
+
+```python
+# ❌ WRONG: Hard dependency (not testable, violates DIP)
+class KnowledgeGraph:
+    def __init__(self):
+        self.intelligence = get_codebase_intelligence()  # Hard dependency!
+
+# ✅ RIGHT: Interface + Dependency Injection (testable, follows DIP)  
+class KnowledgeGraph:
+    def __init__(self, intelligence: IntelligenceInterface):  # Injected
+        self.intelligence = intelligence
+```
+
+**WHY CRITICAL**: Makes semantic-search-service expert in proper SOLID/DIP patterns
 
 ## 📁 KEY FILES
 - `CAPABILITY_MAPPING.md` - **TRUTH TABLE** (what's real vs claimed)
