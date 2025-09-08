@@ -62,7 +62,7 @@ class IndexResourceManager:
     
     def get_index(self, collection_name: str, mode: str = None) -> Union[PropertyGraphIndex, VectorStoreIndex]:
         """Get index based on mode - enterprise by default"""
-        mode = mode or self.config.config.get('index_mode', 'enterprise')
+        mode = mode or self.config.config.index_mode
         
         if mode in ['basic', 'vector']:
             return self.get_basic_index(collection_name)

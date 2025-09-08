@@ -56,5 +56,5 @@ def should_use_complex_model(task_description: str) -> str:
     """Determine model complexity using shared resource manager"""
     return _llm_selector_resource.should_use_complex_model(task_description)
 
-# Export config for backward compatibility
-CONFIG = _config_resource.config
+# Export config as dict for backward compatibility with .get() calls
+CONFIG = _config_resource.config.model_dump()

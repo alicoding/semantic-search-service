@@ -119,30 +119,14 @@ class CodebaseIntelligence:
             return {"indexed": True, "project": project_name, "error": str(e)}
     
     def refresh_project(self, path: str, project_name: str) -> Dict[str, Any]:
-        """Refresh project with new documents using native LlamaIndex methods"""
+        """Refresh project with full clear-and-rebuild to prevent stale documents"""
         try:
-            if not self.project_exists(project_name):
-                return self.index_project(path, project_name)
+            # Clear existing project to remove stale documents
+            if self.project_exists(project_name):
+                self.clear_project(project_name)
             
-            # Load new documents
-            new_documents = self.document_loader.load_documents(path)
-            if not new_documents:
-                return {"status": "no_changes", "project": project_name}
-            
-            # Get existing index and add new documents
-            index = self.get_index(project_name)
-            from llama_index.core.node_parser import SimpleNodeParser
-            parser = SimpleNodeParser()
-            new_nodes = parser.get_nodes_from_documents(new_documents)
-            
-            # Use native add_nodes method
-            index.insert_nodes(new_nodes)
-            
-            return {
-                "status": "success", 
-                "project": project_name,
-                "documents_added": len(new_documents)
-            }
+            # Full rebuild ensures no stale content
+            return self.index_project(path, project_name)
         except Exception as e:
             return {"status": "error", "error": str(e), "project": project_name}
     

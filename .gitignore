@@ -126,6 +126,7 @@ uvicorn.log
 # Development artifacts
 benchmark_*.py
 temp_*.py
+playground/
 
 # Migration tracking files
 *MIGRATION*TRACKER*.md

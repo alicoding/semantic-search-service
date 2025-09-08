@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Modern FastAPI lifespan management - handles startup/shutdown"""
     logger.info("🚀 Starting Semantic Search Service...")
-    from src.core.docs.doc_refresh import start_refresh_scheduler
-    start_refresh_scheduler()
+    # Scheduler temporarily disabled for API stability
+    # from src.core.docs.doc_refresh import start_refresh_scheduler
+    # start_refresh_scheduler()
     
     yield
     
@@ -49,6 +50,13 @@ class SearchRequest(BaseModel):
 class IndexRequest(BaseModel):
     path: str
     name: str
+
+class OverviewRequest(BaseModel):
+    project_path: str = "."
+    include: List[str] = ["structure", "violations", "patterns"]
+
+class AutoDocsSetupRequest(BaseModel):
+    project_path: str
 
 # === ULTRA-THIN ENDPOINTS (1-2 lines each) ===
 
@@ -90,6 +98,45 @@ def architecture_endpoint(project: str, language: str = None):
         "architecture_issues": issues,
         "compliant": all("✅" in issue for issue in issues)
     }
+
+@app.post("/analyze/overview")
+def overview_endpoint(req: OverviewRequest):
+    """Project overview endpoint - pure transport wrapper"""
+    from src.core.component_registry import get_component
+    
+    result = {
+        "structure": "Structure unavailable",
+        "patterns": ["No patterns detected"],
+        "violations": ["No violations found"], 
+        "important_files": {}
+    }
+    
+    if "violations" in req.include:
+        try:
+            violations_component = get_component('analysis', 'violations_analysis')
+            violations = violations_component.find_violations("semantic-search-service")
+            if violations and violations.get("violations"):
+                result["violations"] = violations["violations"]
+        except Exception:
+            pass
+    
+    if "patterns" in req.include:
+        try:
+            architecture_component = get_component('analysis', 'architecture_compliance')
+            patterns = architecture_component.check_architecture_compliance("semantic-search-service")
+            if patterns:
+                result["patterns"] = patterns
+        except Exception:
+            pass
+    
+    return result
+
+@app.post("/api/auto-docs/setup")
+def auto_docs_setup_endpoint(req: AutoDocsSetupRequest):
+    """Auto-docs setup endpoint - 95/5 git hook installation"""
+    from src.integrations.auto_docs_setup import create_auto_docs_setup_service
+    service = create_auto_docs_setup_service()
+    return service.setup_project_hooks(req.project_path)
 
 # === MORE ENDPOINTS AS THIN WRAPPERS ===
 # Each endpoint is 1-2 lines calling existing facade

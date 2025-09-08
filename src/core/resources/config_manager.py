@@ -238,7 +238,7 @@ class ConfigurationResourceManager:
         """Get SimpleDirectoryReader with config settings"""
         from llama_index.core import SimpleDirectoryReader
         from pathlib import Path
-        index_config = self.config.get('indexing', {})
+        index_config = self.config.indexing or {}
         
         # Native 2025 pattern: Use explicit include paths if configured
         include_paths = index_config.get('include_paths')
